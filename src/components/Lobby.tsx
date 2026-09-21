@@ -32,6 +32,7 @@ import {
   Crosshair,
   Settings,
   Image as ImageIcon,
+  Crown,
 } from 'lucide-react';
 import {
   ArcadeGameMode,
@@ -99,6 +100,76 @@ const ALL_GAME_MODES: Array<{
     label: '4 Pics 1 Word',
     icon: ImageIcon,
     badge: 'Picture Guessing',
+    badgeColor: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/60 dark:text-cyan-300',
+  },
+  {
+    id: 'memory_rush',
+    label: 'Memory Doodle Rush',
+    icon: Brain,
+    badge: 'Visual Recall',
+    badgeColor: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/60 dark:text-cyan-300',
+  },
+  {
+    id: 'pixel_reveal',
+    label: 'Pixel Reveal Mystery',
+    icon: Eye,
+    badge: 'Picture Reveal',
+    badgeColor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300',
+  },
+  {
+    id: 'blindfold_maestro',
+    label: 'Blindfold Maestro',
+    icon: Eye,
+    badge: 'Blind Drawing',
+    badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300',
+  },
+  {
+    id: 'color_clash',
+    label: 'Color Clash Matrix',
+    icon: Palette,
+    badge: 'Reflex Brain',
+    badgeColor: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+  },
+  {
+    id: 'math_sprint',
+    label: 'Math Sprint',
+    icon: Calculator,
+    badge: 'Speed Math',
+    badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
+  },
+  {
+    id: 'emoji_match',
+    label: 'Emoji Tile Memory Match',
+    icon: Puzzle,
+    badge: 'Memory Tiles',
+    badgeColor: 'bg-pink-100 text-pink-700 dark:bg-pink-900/60 dark:text-pink-300',
+  },
+  {
+    id: 'whack_doodle',
+    label: 'Whack-A-Doodle Reflex',
+    icon: Crosshair,
+    badge: 'Rapid Tap',
+    badgeColor: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+  },
+  {
+    id: 'tower_stack',
+    label: 'Cyber Tower Stacker',
+    icon: Building2,
+    badge: 'Precision Stack',
+    badgeColor: 'bg-violet-100 text-violet-700 dark:bg-violet-900/60 dark:text-violet-300',
+  },
+  {
+    id: 'ngip_mega_wheel',
+    label: 'Ngip Supreme Mega Wheel',
+    icon: Crown,
+    badge: 'Ngip VIP',
+    badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
+  },
+  {
+    id: 'ngip_vault_hacker',
+    label: 'Ngip Vault Hacker',
+    icon: ShieldCheck,
+    badge: 'Ngip VIP',
     badgeColor: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/60 dark:text-cyan-300',
   },
   {
@@ -264,18 +335,13 @@ export const Lobby: React.FC<LobbyProps> = ({
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-5 space-y-4 sm:space-y-6 animate-fade-in">
+    <div className="gw-reveal w-full max-w-7xl mx-auto py-3 sm:py-5 space-y-4 sm:space-y-6">
       {/* Live Realistic Status & Activity Ticker Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-purple-900/40 shadow-xs text-xs font-semibold">
+      <div className="gw-surface flex flex-wrap items-center justify-between gap-2 rounded-2xl px-3.5 py-2 text-xs font-semibold">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span>Multiplayer Cluster Online</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300">
-            <Users className="w-3.5 h-3.5" />
-            <span className="font-mono font-black">{120 + (publicRooms.reduce((acc, r) => acc + (r.playerCount || 0), 0))}</span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">Players Live</span>
           </div>
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 text-[11px]">
             <Sparkles className="w-3.5 h-3.5 text-purple-500" />

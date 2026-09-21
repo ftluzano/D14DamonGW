@@ -9,10 +9,10 @@ interface SkinShopModalProps {
   onClose: () => void;
 }
 
-const SKINS: Array<{ id: GameSkinId; name: string; description: string; mode: ArcadeGameMode; preview: string }> = [
-  { id: 'classic', name: 'Classic', description: 'The original look for every game.', mode: 'uno_party', preview: 'from-slate-500 to-slate-800' },
-  { id: 'uno_neon', name: 'UNO Neon', description: 'Electric card faces and a bright table glow.', mode: 'uno_party', preview: 'from-rose-500 via-amber-400 to-cyan-400' },
-  { id: 'cyber_gold', name: 'Cyber Gold', description: 'A metallic arcade finish for supported games.', mode: 'cyber_typing', preview: 'from-amber-300 via-orange-500 to-slate-950' },
+const SKINS: Array<{ id: GameSkinId; name: string; mode: ArcadeGameMode; preview: string }> = [
+  { id: 'classic', name: 'Classic', mode: 'uno_party', preview: 'from-slate-500 to-slate-800' },
+  { id: 'uno_neon', name: 'UNO Neon', mode: 'uno_party', preview: 'from-rose-500 via-amber-400 to-cyan-400' },
+  { id: 'cyber_gold', name: 'Cyber Gold', mode: 'cyber_typing', preview: 'from-amber-300 via-orange-500 to-slate-950' },
 ];
 
 const DURATIONS = [
@@ -40,7 +40,7 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({ isOpen, onClose })
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <div className="rounded-xl bg-amber-500/15 p-2 text-amber-300"><ShoppingBag className="h-5 w-5" /></div>
-            <div><h2 className="font-black">Arcade Skin Shop</h2><p className="text-[11px] text-slate-400">Buy once, equip per game, keep it across sessions.</p></div>
+            <div><h2 className="font-black">Arcade Skin Shop</h2></div>
           </div>
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white" title="Close shop"><X className="h-5 w-5" /></button>
         </div>
@@ -70,7 +70,7 @@ export const SkinShopModal: React.FC<SkinShopModalProps> = ({ isOpen, onClose })
               <div key={skin.id} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
                 <div className={`h-20 bg-gradient-to-br ${skin.preview} p-3`}><Palette className="h-5 w-5 text-white/80" /></div>
                 <div className="space-y-2 p-3">
-                  <div><h3 className="text-sm font-black">{skin.name}</h3><p className="text-[11px] leading-relaxed text-slate-400">{skin.description}</p></div>
+                  <div><h3 className="text-sm font-black">{skin.name}</h3></div>
                   {equipped ? <div className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-black text-emerald-300"><Check className="h-3.5 w-3.5" /> Equipped</div> : owned ? (
                     <button type="button" onClick={() => { purchaseOrEquipSkin(skin.mode, skin.id); setMessage(`${skin.name} equipped.`); }} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-black text-white hover:bg-slate-700">Equip</button>
                   ) : (

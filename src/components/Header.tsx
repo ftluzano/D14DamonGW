@@ -56,8 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
   const isInMultiplayerRoom = Boolean(gameState);
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b-2 border-slate-300 dark:border-purple-900/60 shadow-md shadow-purple-950/5 transition-colors">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 h-13 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 bg-white/76 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/76 transition-colors">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-14 sm:h-[4.5rem] flex items-center justify-between gap-2 sm:gap-5">
         {/* Left: Brand Logo & Back Button */}
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           {/* Universal Back Button when in game or room */}
@@ -83,10 +83,13 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onSelectMode && onSelectMode('multiplayer_draw')}
             className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none group shrink-0"
           >
-            <GWLogo size="sm" />
+            <div className="relative">
+              <GWLogo size="sm" />
+              <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-lime-400 shadow-[0_0_12px_rgba(163,230,53,.8)]" />
+            </div>
             <div className="hidden min-[360px]:block">
               <div className="flex items-center gap-1">
-                <h1 className="text-xs sm:text-base font-black tracking-tight bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-500 bg-clip-text text-transparent leading-none">
+                <h1 className="text-xs sm:text-base font-black tracking-tight text-slate-950 dark:text-white leading-none">
                   GuessWhat
                 </h1>
                 <span className="text-[9px] sm:text-[10px] text-pink-500 font-black animate-pulse">✦</span>

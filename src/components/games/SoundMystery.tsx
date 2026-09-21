@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface MysterySoundItem {
   id: string;
@@ -187,6 +188,7 @@ export const SoundMystery: React.FC<SoundMysteryProps> = ({ onBackToLobby }) => 
   const [showHint, setShowHint] = useState(false);
   const [waveSeed, setWaveSeed] = useState(0);
   const [gameComplete, setGameComplete] = useState(false);
+  useMultiplayerArcadeRace('sound_mystery', score, gameComplete);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);

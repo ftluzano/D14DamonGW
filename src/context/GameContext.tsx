@@ -9,6 +9,7 @@ import {
   WordChoice,
   Player,
   ArcadeGameMode,
+  ChatProfile,
 } from '../types';
 import { getSocket, getServerUrl, setCustomServerUrl, reconnectSocket } from '../services/socket';
 import { useAuth } from './AuthContext';
@@ -26,6 +27,7 @@ interface ReactionItem {
 interface GameContextType {
   gameState: GameState | null;
   messages: ChatMessage[];
+  globalMessages: ChatMessage[];
   drawingHistory: CanvasAction[];
   isHost: boolean;
   isDrawer: boolean;
@@ -46,6 +48,7 @@ interface GameContextType {
   sendCanvasAction: (action: CanvasAction) => void;
   clearCanvas: () => void;
   sendMessage: (text: string) => void;
+  sendGlobalMessage: (text: string) => void;
   sendReaction: (emoji: string) => void;
   reactToMessage: (messageId: string, emoji: string) => void;
   leaveRoom: () => void;
@@ -58,6 +61,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user, updateStats } = useAuth();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [globalMessages, setGlobalMessages] = useState<ChatMessage[]>([]);
   const [drawingHistory, setDrawingHistory] = useState<CanvasAction[]>([]);
   const [isHost, setIsHost] = useState(false);
   const [globalLeaderboard, setGlobalLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -137,6 +141,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const handleRoomJoined = ({ room, isHost: hostStatus }: { room: GameState; isHost: boolean }) => {
+      window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'multiplayer' }));
       setGameState(room);
       setIsHost(hostStatus);
       setMessages([]);
@@ -161,6 +166,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const handleChatMessage = (msg: ChatMessage) => {
+      if (msg.scope === 'global') {
+        setGlobalMessages(prev => [...prev, msg].slice(-100));
+        return;
+      }
       setMessages(prev => [...prev, msg]);
 
       if (msg.type === 'correct_guess') {
@@ -187,6 +196,35 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (msg.type === 'close_guess') {
         soundManager.playCloseGuess();
       }
+    };
+
+    const handleGlobalMessagesCleared = ({ userId }: { userId: string }) => {
+      setGlobalMessages(prev => prev.filter(message => message.senderId !== userId));
+    };
+
+    const handleGlobalHistory = (history: ChatMessage[]) => {
+      setGlobalMessages(history.slice(-100));
+    };
+
+    const handleRoomMessagesCleared = ({ userId }: { userId: string }) => {
+      setMessages(prev => prev.filter(message => message.senderId !== userId));
+    };
+
+    const handleChatProfileUpdate = ({ profile }: { profile: ChatProfile }) => {
+      const updateMessages = (items: ChatMessage[]) => items.map(message => (
+        message.senderId === profile.id
+          ? {
+              ...message,
+              senderName: profile.username,
+              senderAvatar: profile.avatar,
+              senderColor: profile.color,
+              isNgip: profile.isNgip,
+              profile,
+            }
+          : message
+      ));
+      setMessages(updateMessages);
+      setGlobalMessages(updateMessages);
     };
 
     const handleReactionBroadcast = ({ senderName, emoji, id }: { senderName: string; emoji: string; id: string }) => {
@@ -225,6 +263,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPublicRooms(rooms);
     };
 
+    const handleRoomJoinReady = ({ roomIdentifier }: { roomIdentifier: string }) => {
+      joinRoom(roomIdentifier);
+    };
+
     const handleRoomTimer = ({ timeLeft }: { timeLeft: number }) => {
       setGameState(prev => (prev ? { ...prev, timeLeft } : null));
       if (timeLeft <= 10 && timeLeft > 0) {
@@ -251,6 +293,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const handleRoomClosed = (data: { reason: string; hostName?: string }) => {
+      window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'local' }));
       setGameState(null);
       setDrawingHistory([]);
       setMessages([]);
@@ -294,10 +337,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socket.on('canvas:clear', handleCanvasClear);
     socket.on('canvas:history', handleCanvasHistory);
     socket.on('chat:message', handleChatMessage);
+    socket.on('global:messages_cleared', handleGlobalMessagesCleared);
+    socket.on('global:history', handleGlobalHistory);
+    socket.on('chat:messages_cleared', handleRoomMessagesCleared);
+    socket.on('chat:profile_update', handleChatProfileUpdate);
     socket.on('chat:message_reaction_update', handleMessageReactionUpdate);
     socket.on('reaction:broadcast', handleReactionBroadcast);
     socket.on('leaderboard:update', handleLeaderboardUpdate);
     socket.on('rooms:list', handleRoomsList);
+    socket.on('room:join_ready', handleRoomJoinReady);
     socket.on('room:timer', handleRoomTimer);
     socket.on('room:hint_update', handleHintUpdate);
     socket.on('room:error', handleRoomError);
@@ -324,10 +372,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socket.off('canvas:clear', handleCanvasClear);
       socket.off('canvas:history', handleCanvasHistory);
       socket.off('chat:message', handleChatMessage);
+      socket.off('global:messages_cleared', handleGlobalMessagesCleared);
+      socket.off('global:history', handleGlobalHistory);
+      socket.off('chat:messages_cleared', handleRoomMessagesCleared);
+      socket.off('chat:profile_update', handleChatProfileUpdate);
       socket.off('chat:message_reaction_update', handleMessageReactionUpdate);
       socket.off('reaction:broadcast', handleReactionBroadcast);
       socket.off('leaderboard:update', handleLeaderboardUpdate);
       socket.off('rooms:list', handleRoomsList);
+      socket.off('room:join_ready', handleRoomJoinReady);
       socket.off('room:timer', handleRoomTimer);
       socket.off('room:hint_update', handleHintUpdate);
       socket.off('room:error', handleRoomError);
@@ -346,10 +399,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar: user.avatar,
           color: user.color,
           cosmetics: user.cosmetics,
+          stats: user.stats,
         },
       });
     }
-  }, [user?.id, user?.username, user?.avatar, user?.color, user?.cosmetics]);
+  }, [user?.id, user?.username, user?.avatar, user?.color, user?.cosmetics, user?.stats]);
 
   const updateServerUrl = useCallback((_newUrl: string | null) => {
     // Standard origin is always used for the full-stack server
@@ -363,7 +417,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (socket.connected) {
       socket.emit('rooms:get');
     }
-    fetch('/api/rooms')
+    fetch(`${getServerUrl()}/api/rooms`)
       .then(res => res.json())
       .then(data => {
         if (data.rooms) setPublicRooms(data.rooms);
@@ -409,11 +463,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       botPlayersEnabled: false,
     };
 
-    if (!socket.connected) {
+    const payload = { player, settings: cleanSettings, roomName: roomName || `${activeName}'s Game` };
+    const emitCreate = () => {
+      socket.timeout(8000).emit('room:create', payload, (timeoutError: Error | null, response?: { ok?: boolean; message?: string }) => {
+        if (timeoutError) {
+          setErrorMessage('Could not reach the game server. Please try creating the room again.');
+        } else if (!response?.ok) {
+          setErrorMessage(response?.message || 'The room could not be created.');
+        }
+      });
+    };
+
+    if (socket.connected) {
+      emitCreate();
+    } else {
+      socket.once('connect', emitCreate);
       socket.connect();
     }
-
-    socket.emit('room:create', { player, settings: cleanSettings, roomName });
   };
 
   const joinRoom = (roomIdentifier: string) => {
@@ -501,6 +567,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socket.emit('chat:send', { text: text.trim() });
   };
 
+  const sendGlobalMessage = (text: string) => {
+    if (!text.trim()) return;
+    const activeUser = userRef.current;
+    if (!activeUser) return;
+    getSocket().emit('global:chat_send', {
+      text: text.trim(),
+      player: {
+        id: activeUser.id,
+        username: activeUser.username,
+        avatar: activeUser.avatar,
+        color: activeUser.color,
+        isNgip: activeUser.isNgip,
+        stats: activeUser.stats,
+      },
+    });
+  };
+
   const sendReaction = (emoji: string) => {
     const socket = getSocket();
     socket.emit('reaction:send', { emoji });
@@ -514,6 +597,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const leaveRoom = () => {
     const socket = getSocket();
     socket.emit('room:leave');
+    window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'local' }));
     setGameState(null);
     setDrawingHistory([]);
     setMessages([]);
@@ -526,6 +610,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         gameState,
         messages,
+          globalMessages,
         drawingHistory,
         isHost,
         isDrawer,
@@ -546,6 +631,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendCanvasAction,
         clearCanvas,
         sendMessage,
+        sendGlobalMessage,
         sendReaction,
         reactToMessage,
         leaveRoom,

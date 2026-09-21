@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Layers, RefreshCw, Zap, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface Block {
   y: number;
@@ -45,6 +47,9 @@ export const TowerStack: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub 
     setIsGameOver(false);
     soundManager.playCorrect();
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('tower_stack', score, isGameOver);
 
   useEffect(() => {
     if (isPlaying && !isGameOver) {

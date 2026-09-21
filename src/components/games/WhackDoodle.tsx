@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Flame, RefreshCw, Zap, Crosshair } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 const DOODLE_EMOJIS = ['👾', '👻', '🤖', '🦊', '🎃', '🐵', '🐱', '🦄'];
 
@@ -43,6 +45,9 @@ export const WhackDoodle: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub
     soundManager.playCorrect();
     setTimeout(popDoodle, 400);
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('whack_doodle', score, isGameOver);
 
   useEffect(() => {
     if (isPlaying && !isGameOver) {

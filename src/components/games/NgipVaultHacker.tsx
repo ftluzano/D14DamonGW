@@ -16,6 +16,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
 import { NgipBadge } from '../NgipBadge';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface NgipVaultHackerProps {
   onBackToHub: () => void;
@@ -78,6 +80,9 @@ export const NgipVaultHacker: React.FC<NgipVaultHackerProps> = ({ onBackToHub })
     setTotalPointsWon(0);
     startLevel(0);
   };
+
+  useMultiplayerAutoStart(handleStartInfiltration);
+  useMultiplayerArcadeRace('ngip_vault_hacker', totalPointsWon, gameStage === 'success' || gameStage === 'failed');
 
   const startLevel = (levelIdx: number) => {
     const lvl = VAULT_LEVELS[levelIdx];

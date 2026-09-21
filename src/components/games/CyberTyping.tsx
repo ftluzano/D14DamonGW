@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Flame, Keyboard, RefreshCw, Zap, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 const WORD_BANK = [
   'cyber', 'neon', 'matrix', 'stream', 'laser', 'velocity', 'arcade', 'galaxy',
@@ -47,6 +49,9 @@ export const CyberTyping: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub
     }, 100);
   };
 
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('cyber_typing', wordsCleared, isGameOver);
   useEffect(() => {
     if (isPlaying && !isGameOver) {
       timerRef.current = setInterval(() => {

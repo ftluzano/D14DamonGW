@@ -37,9 +37,15 @@ import { ChessGame } from './components/games/ChessGame';
 import { NgipMegaWheel } from './components/games/NgipMegaWheel';
 import { NgipVaultHacker } from './components/games/NgipVaultHacker';
 import { Lucky9Game } from './components/games/Lucky9Game';
+import { ColorClash } from './components/games/ColorClash';
+import { MathSprint } from './components/games/MathSprint';
+import { PixelReveal } from './components/games/PixelReveal';
+import { BlindfoldMaestro } from './components/games/BlindfoldMaestro';
+import { TowerStack } from './components/games/TowerStack';
 import { ArcadeGameMode } from './types';
 import { AiGameConfig } from './components/VsAiArena';
 import { GothicDripBackground } from './components/GothicDripBackground';
+import { GlobalChatDock } from './components/GlobalChatDock';
 
 const MainGameContainer: React.FC<{
   currentMode: ArcadeGameMode;
@@ -67,11 +73,13 @@ const MainGameContainer: React.FC<{
   const [activeAiConfig, setActiveAiConfig] = useState<AiGameConfig | null>(null);
 
   const handleLaunchAi = (config: AiGameConfig) => {
+    window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'vs_ai' }));
     setActiveAiConfig(config);
     setCurrentMode(config.mode);
   };
 
   const handleBackToLobby = () => {
+    window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'local' }));
     setActiveAiConfig(null);
     setCurrentMode('multiplayer_draw');
   };
@@ -117,6 +125,16 @@ const MainGameContainer: React.FC<{
         return <NgipMegaWheel onBackToHub={leaveRoom} />;
       case 'ngip_vault_hacker':
         return <NgipVaultHacker onBackToHub={leaveRoom} />;
+      case 'color_clash':
+        return <ColorClash onBackToHub={leaveRoom} />;
+      case 'math_sprint':
+        return <MathSprint onBackToHub={leaveRoom} />;
+      case 'pixel_reveal':
+        return <PixelReveal onBackToHub={leaveRoom} />;
+      case 'blindfold_maestro':
+        return <BlindfoldMaestro onBackToHub={leaveRoom} />;
+      case 'tower_stack':
+        return <TowerStack onBackToHub={leaveRoom} />;
       case 'multiplayer_draw':
       default:
         return null;
@@ -124,7 +142,7 @@ const MainGameContainer: React.FC<{
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
+    <div className="gw-shell min-h-screen flex flex-col text-slate-900 dark:text-slate-100 transition-colors selection:bg-cyan-400 selection:text-slate-950 relative overflow-x-hidden">
       {/* Y2K Gothic Drip Background Graffiti Overlay */}
       <GothicDripBackground />
 
@@ -141,7 +159,7 @@ const MainGameContainer: React.FC<{
       />
 
       {/* Main Game Screen depending on selected mode */}
-      <main className="flex-1 flex flex-col p-2 sm:p-4 max-w-7xl w-full mx-auto relative z-10">
+      <main className="gw-main flex-1 flex flex-col mx-auto relative z-10">
         <AnimatePresence mode="wait">
           {/* 1. ACTIVE MULTIPLAYER GAME ROOM */}
           {Boolean(gameState) ? (
@@ -511,6 +529,12 @@ const MainGameContainer: React.FC<{
               <NgipVaultHacker onBackToHub={handleBackToLobby} />
             </motion.div>
           )}
+
+          {!gameState && currentMode === 'color_clash' && <ColorClash onBackToHub={handleBackToLobby} />}
+          {!gameState && currentMode === 'math_sprint' && <MathSprint onBackToHub={handleBackToLobby} />}
+          {!gameState && currentMode === 'pixel_reveal' && <PixelReveal onBackToHub={handleBackToLobby} aiConfig={activeAiConfig} />}
+          {!gameState && currentMode === 'blindfold_maestro' && <BlindfoldMaestro onBackToHub={handleBackToLobby} />}
+          {!gameState && currentMode === 'tower_stack' && <TowerStack onBackToHub={handleBackToLobby} />}
         </AnimatePresence>
       </main>
 
@@ -560,7 +584,12 @@ export default function App() {
             >
               <MainGameContainer
                 currentMode={currentMode}
-                setCurrentMode={setCurrentMode}
+                setCurrentMode={(mode) => {
+                  if (mode === 'multiplayer_draw') {
+                    window.dispatchEvent(new CustomEvent('guesswhat:score_context', { detail: 'local' }));
+                  }
+                  setCurrentMode(mode);
+                }}
                 onOpenLeaderboard={() => setShowLeaderboard(true)}
                 onOpenProfile={() => setShowProfile(true)}
                 onOpenSettings={() => setShowSettings(true)}
@@ -572,6 +601,8 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {hasEnteredApp && <GlobalChatDock />}
 
         {/* Global Modals */}
 

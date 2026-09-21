@@ -18,6 +18,8 @@ import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
 import { MEMORY_SCENES } from '../../data/arcadeData';
 import { MemoryScene } from '../../types';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 export const MemoryRush: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub }) => {
   const { user, updateStats } = useAuth();
@@ -46,6 +48,9 @@ export const MemoryRush: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub 
     setStars(0);
     soundManager.playTurnStart();
   };
+
+  useMultiplayerAutoStart(startMemoryGame);
+  useMultiplayerArcadeRace('memory_rush', userScore, phase === 'scoring');
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;

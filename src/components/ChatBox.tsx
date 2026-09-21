@@ -18,6 +18,8 @@ import { useAuth } from '../context/AuthContext';
 import { AvatarRenderer } from './AvatarRenderer';
 import { NgipName, NgipBadge } from './NgipBadge';
 import { soundManager } from '../utils/soundEffects';
+import { ChatProfile } from '../types';
+import { PublicProfileModal } from './PublicProfileModal';
 
 const QUICK_REACTIONS = ['❤️', '👍', '😂', '🔥', '👏', '🤯', '🎨', '🏆'];
 const TAPBACK_EMOJIS = ['❤️', '👍', '👎', '😂', '‼️', '❓'];
@@ -27,6 +29,7 @@ export const ChatBox: React.FC = () => {
   const { user } = useAuth();
   const [inputText, setInputText] = useState('');
   const [activeTapbackMsgId, setActiveTapbackMsgId] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ChatProfile | null>(null);
   const lastTapRef = useRef<{ [msgId: string]: number }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +37,14 @@ export const ChatBox: React.FC = () => {
   const myPlayer = gameState?.players.find((p) => p.id === user?.id);
   const hasGuessed = myPlayer?.hasGuessed ?? false;
   const isDrawingTurn = gameState?.status === 'drawing';
+
+  useEffect(() => {
+    setSelectedProfile((current) => {
+      if (!current) return null;
+      const latest = messages.find((message) => message.senderId === current.id)?.profile;
+      return latest || current;
+    });
+  }, [messages]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -212,22 +223,26 @@ export const ChatBox: React.FC = () => {
                 className={`relative flex items-end gap-2 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 {/* Profile Picture Avatar */}
-                <div
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfile(msg.profile || null)}
                   className="w-8 h-8 rounded-full overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-xs mb-1"
                   title={msg.senderName}
                 >
                   <AvatarRenderer avatar={msg.senderAvatar || '1'} className="w-full h-full object-cover" />
-                </div>
+                </button>
 
                 {/* Message Content & Name */}
                 <div className={`relative flex flex-col max-w-[78%] ${isMe ? 'items-end' : 'items-start'}`}>
                   {/* Sender Name above message */}
                   <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-1 mb-0.5">
-                    <NgipName
-                      name={isMe ? 'You' : msg.senderName}
-                      isNgip={Boolean(msg.isNgip || (isMe && user?.isNgip))}
-                      className="font-bold truncate max-w-[120px]"
-                    />
+                    <button type="button" onClick={() => setSelectedProfile(msg.profile || null)} className="truncate max-w-[120px] hover:text-indigo-500">
+                      <NgipName
+                        name={isMe ? 'You' : msg.senderName}
+                        isNgip={Boolean(msg.isNgip || (isMe && user?.isNgip))}
+                        className="font-bold truncate max-w-[120px]"
+                      />
+                    </button>
                     {Boolean(msg.isNgip || (isMe && user?.isNgip)) && <NgipBadge size="xs" />}
                     <span className="text-[9px] text-slate-400 font-mono">
                       {timeString}
@@ -361,6 +376,7 @@ export const ChatBox: React.FC = () => {
           <ArrowUp className="w-4 h-4 stroke-[2.5]" />
         </button>
       </form>
+      <PublicProfileModal profile={selectedProfile} onClose={() => setSelectedProfile(null)} />
     </div>
   );
 };

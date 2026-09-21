@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Calculator, RefreshCw, Flame, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface MathProblem {
   question: string;
@@ -67,6 +69,9 @@ export const MathSprint: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub 
     setCurrentProblem(generateProblem());
     soundManager.playCorrect();
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('math_sprint', score, isGameOver);
 
   useEffect(() => {
     if (isPlaying && !isGameOver) {

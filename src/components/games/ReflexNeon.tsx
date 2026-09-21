@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface NoteOrb {
   id: number;
@@ -217,6 +219,9 @@ export const ReflexNeon: React.FC<{ onBackToLobby?: () => void }> = ({ onBackToL
     setGameState('playing');
     soundManager.playTurnStart();
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('reflex_neon', score, gameState === 'game_over');
 
   // Main 60FPS Game Loop
   useEffect(() => {

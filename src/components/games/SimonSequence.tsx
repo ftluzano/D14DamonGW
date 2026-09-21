@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Music, RefreshCw, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface SimonPad {
   id: number;
@@ -86,6 +88,9 @@ export const SimonSequence: React.FC<{ onBackToHub: () => void }> = ({ onBackToH
     soundManager.playCorrect();
     startNextRound([]);
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('simon_sequence', round, isGameOver);
 
   const handlePadClick = (padId: number) => {
     if (!isPlaying || isShowingSequence || isGameOver) return;

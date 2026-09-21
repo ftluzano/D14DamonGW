@@ -72,6 +72,8 @@ const DEFAULT_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '
 export const AVATAR_OPTIONS = DEFAULT_AVATARS;
 export const COLOR_OPTIONS = DEFAULT_COLORS;
 
+type ScoreContext = 'local' | 'multiplayer' | 'vs_ai';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function normalizeStats(s?: Partial<PlayerStats>): PlayerStats {
@@ -160,6 +162,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allRegisteredUsers, setAllRegisteredUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+  const [scoreContext, setScoreContext] = useState<ScoreContext>('local');
+
+  useEffect(() => {
+    const handleScoreContext = (event: Event) => {
+      const nextContext = (event as CustomEvent<ScoreContext>).detail;
+      if (nextContext === 'local' || nextContext === 'multiplayer' || nextContext === 'vs_ai') {
+        setScoreContext(nextContext);
+      }
+    };
+    window.addEventListener('guesswhat:score_context', handleScoreContext);
+    return () => window.removeEventListener('guesswhat:score_context', handleScoreContext);
+  }, []);
 
   // Initialize Dark Mode: check localStorage or default to true
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -386,7 +400,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
 
     const current = normalizeStats(user.stats);
-    const addedScore = statDelta.totalScore || 0;
+    const requestedScore = Math.max(0, statDelta.totalScore || 0);
+    const addedScore = scoreContext === 'vs_ai'
+      ? 0
+      : scoreContext === 'multiplayer' && requestedScore > 0
+        ? Math.min(100, Math.max(30, requestedScore))
+        : requestedScore;
     
     // Determine win/loss states
     const hasExplicitWinFlag = wonGame === true || (typeof statDelta.wins === 'number' && statDelta.wins > 0);

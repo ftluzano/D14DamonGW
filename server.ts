@@ -16,6 +16,7 @@ import {
   LeaderboardEntry,
   WordChoice,
   UserProfile,
+  ChatProfile,
   ArcadeGameMode,
   Lucky9Card,
   Lucky9Suit,
@@ -221,6 +222,15 @@ interface ServerChessGame {
   capturedByBlack: Array<{ type: string; color: 'w' | 'b' }>;
 }
 
+interface ServerArcadeRace {
+  mode: ArcadeGameMode;
+  status: 'playing' | 'game_over';
+  timeLeft: number;
+  scores: Map<string, number>;
+  finished: Set<string>;
+  timerInterval?: NodeJS.Timeout;
+}
+
 export interface ServerLucky9Game {
   deck: Lucky9Card[];
   playerHands: Map<string, Lucky9Card[]>;
@@ -260,9 +270,39 @@ interface ServerRoom {
   emojiGame?: ServerEmojiGame;
   chessGame?: ServerChessGame;
   lucky9Game?: ServerLucky9Game;
+  arcadeRace?: ServerArcadeRace;
 }
 
 const ROOMS = new Map<string, ServerRoom>();
+const GLOBAL_CHAT_MESSAGES: ChatMessage[] = [];
+
+function getChatProfile(player: Pick<Player, 'id' | 'username' | 'avatar' | 'color' | 'stats' | 'isNgip'>): ChatProfile {
+  return {
+    id: player.id,
+    username: player.username,
+    avatar: player.avatar,
+    color: player.color,
+    isNgip: player.isNgip,
+    stats: {
+      gamesPlayed: player.stats?.gamesPlayed || 0,
+      wins: player.stats?.wins || 0,
+      losses: player.stats?.losses || Math.max(0, (player.stats?.gamesPlayed || 0) - (player.stats?.wins || 0)),
+      totalScore: player.stats?.totalScore || 0,
+    },
+  };
+}
+
+function clearRoomMessagesForUser(userId: string, room: ServerRoom) {
+  room.messages = room.messages.filter(message => message.senderId !== userId);
+  io.to(room.id).emit('chat:messages_cleared', { userId });
+}
+
+function clearGlobalMessagesForUser(userId: string) {
+  for (let index = GLOBAL_CHAT_MESSAGES.length - 1; index >= 0; index -= 1) {
+    if (GLOBAL_CHAT_MESSAGES[index].senderId === userId) GLOBAL_CHAT_MESSAGES.splice(index, 1);
+  }
+  io.emit('global:messages_cleared', { userId });
+}
 
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1705,10 +1745,12 @@ app.get('/api/rooms', (req: Request, res: Response) => {
 io.on('connection', (socket: Socket) => {
   let currentRoomId: string | null = null;
   let currentPlayerId: string | null = null;
+  let globalPlayerId: string | null = null;
 
   // Send initial leaderboard and public rooms list immediately
   socket.emit('leaderboard:update', GLOBAL_STORE.leaderboard);
   socket.emit('rooms:list', getPublicRoomsList());
+  socket.emit('global:history', GLOBAL_CHAT_MESSAGES);
 
   // Allow client to request latest public rooms on demand
   socket.on('rooms:get', () => {
@@ -1716,7 +1758,10 @@ io.on('connection', (socket: Socket) => {
   });
 
   // 1. Create Room
-  socket.on('room:create', async ({ player, settings, roomName }: { player: Player; settings: RoomSettings; roomName: string }) => {
+  socket.on('room:create', async (
+    { player, settings, roomName }: { player: Player; settings: RoomSettings; roomName: string },
+    acknowledge?: (response: { ok: boolean; message?: string }) => void,
+  ) => {
     const normalizedSettings = normalizeRoomSettings(settings);
     const roomId = 'room_' + Math.random().toString(36).substring(2, 9);
     const code = generateRoomCode();
@@ -1793,6 +1838,8 @@ io.on('connection', (socket: Socket) => {
       initLucky9Game(newRoom);
     }
 
+    acknowledge?.({ ok: true });
+
     // Persist room to Firestore (best-effort, async)
     await saveRoomToFirestore(newRoom);
     await saveActivityToFirestore({ type: 'room_create', roomId: newRoom.id, by: player.id, roomName: newRoom.name }).catch(() => {});
@@ -1862,6 +1909,8 @@ io.on('connection', (socket: Socket) => {
       text: `👋 ${newPlayer.username} joined the game!`,
       type: 'system',
       timestamp: Date.now(),
+          scope: 'room',
+          profile: getChatProfile(newPlayer),
     };
     io.to(room.id).emit('chat:message', joinMsg);
     io.to(room.id).emit('room:state', sanitizeStateForClient(room));
@@ -2085,12 +2134,45 @@ io.on('connection', (socket: Socket) => {
         initChessGame(room);
       } else if (gameMode === 'lucky_9') {
         initLucky9Game(room);
+      } else {
+        initArcadeRace(room);
       }
 
       await saveActivityToFirestore({ type: `game_start_${gameMode}`, roomId: room.id, by: caller.id }).catch(() => {});
       await saveRoomToFirestore(room);
       broadcastPublicRoomsList();
     }
+  });
+
+  // Generic multiplayer bridge for arcade modes that use local interaction
+  // rules but still need shared timing and live player scores.
+  socket.on('arcade:race_get_state', () => {
+    if (!currentRoomId) return;
+    const room = ROOMS.get(currentRoomId);
+    if (!room) return;
+    if (!room.arcadeRace) initArcadeRace(room);
+    else broadcastArcadeRaceState(room);
+  });
+
+  socket.on('arcade:score', ({ score, finished }: { score: number; finished?: boolean }) => {
+    if (!currentRoomId || !currentPlayerId) return;
+    const room = ROOMS.get(currentRoomId);
+    const race = room?.arcadeRace;
+    if (!room || !race || race.status !== 'playing') return;
+    const safeScore = Math.max(0, Math.min(Number(score) || 0, 1_000_000));
+    race.scores.set(currentPlayerId, safeScore);
+    const player = room.state.players.find(item => item.id === currentPlayerId);
+    if (player) player.score = safeScore;
+    if (finished) race.finished.add(currentPlayerId);
+    const activePlayerIds = getConnectedHumanPlayers(room).map(item => item.id);
+    if (activePlayerIds.length > 0 && activePlayerIds.every(id => race.finished.has(id))) {
+      race.status = 'game_over';
+      if (race.timerInterval) clearInterval(race.timerInterval);
+      race.timeLeft = Math.max(0, race.timeLeft);
+      room.state.status = 'game_over';
+    }
+    broadcastArcadeRaceState(room);
+    io.to(room.id).emit('room:state', sanitizeStateForClient(room));
   });
 
   // 5. Word Selection by Drawer
@@ -3178,6 +3260,8 @@ io.on('connection', (socket: Socket) => {
           type: 'correct_guess',
           timestamp: Date.now(),
           pointsAwarded: totalPointsGained,
+          scope: 'room',
+          profile: getChatProfile(sender),
         };
         io.to(room.id).emit('chat:message', correctMsg);
 
@@ -3237,6 +3321,8 @@ io.on('connection', (socket: Socket) => {
       type: 'chat',
       timestamp: Date.now(),
       reactions: {},
+      scope: 'room',
+      profile: getChatProfile(sender),
     };
     if (!room.messages) room.messages = [];
     room.messages.push(chatMsg);
@@ -3244,6 +3330,30 @@ io.on('connection', (socket: Socket) => {
     if (room.messages.length > 100) room.messages.shift();
 
     io.to(room.id).emit('chat:message', chatMsg);
+  });
+
+  socket.on('global:chat_send', ({ text, player }: { text: string; player: Player }) => {
+    const cleanInput = String(text || '').trim();
+    if (!cleanInput || !player?.id) return;
+    globalPlayerId = player.id;
+
+    const chatMsg: ChatMessage = {
+      id: 'global_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+      senderId: player.id,
+      senderName: player.username || 'Player',
+      senderColor: player.color,
+      senderAvatar: player.avatar,
+      isNgip: player.isNgip,
+      text: cleanInput,
+      type: 'chat',
+      timestamp: Date.now(),
+      scope: 'global',
+      profile: getChatProfile(player),
+      reactions: {},
+    };
+    GLOBAL_CHAT_MESSAGES.push(chatMsg);
+    if (GLOBAL_CHAT_MESSAGES.length > 100) GLOBAL_CHAT_MESSAGES.shift();
+    io.emit('chat:message', chatMsg);
   });
 
   // 9. Message Tapback Reaction (iMessage Style Double Tap)
@@ -3305,7 +3415,7 @@ io.on('connection', (socket: Socket) => {
   });
 
   // 10. Live Profile & Avatar Update
-  socket.on('player:profile_update', ({ player }: { player: { id: string; username: string; avatar: string; color?: string; cosmetics?: Player['cosmetics'] } }) => {
+  socket.on('player:profile_update', ({ player }: { player: { id: string; username: string; avatar: string; color?: string; cosmetics?: Player['cosmetics']; stats?: Player['stats']; isNgip?: boolean } }) => {
     if (!player || !player.id) return;
 
     // Update in current active room
@@ -3318,11 +3428,38 @@ io.on('connection', (socket: Socket) => {
           p.avatar = player.avatar || p.avatar;
           if (player.color) p.color = player.color;
           if (player.cosmetics) p.cosmetics = player.cosmetics;
+          if (player.stats) p.stats = player.stats;
+          if (typeof player.isNgip === 'boolean') p.isNgip = player.isNgip;
           io.to(room.id).emit('room:state', sanitizeStateForClient(room));
           saveRoomToFirestore(room).catch(() => {});
         }
       }
     }
+
+    const profile: ChatProfile = {
+      id: player.id,
+      username: player.username || 'Player',
+      avatar: player.avatar || '1',
+      color: player.color,
+      isNgip: player.isNgip,
+      stats: {
+        gamesPlayed: player.stats?.gamesPlayed || 0,
+        wins: player.stats?.wins || 0,
+        losses: player.stats?.losses || 0,
+        totalScore: player.stats?.totalScore || 0,
+      },
+    };
+    const updateMessageProfile = (message: ChatMessage) => {
+      if (message.senderId !== profile.id) return;
+      message.senderName = profile.username;
+      message.senderAvatar = profile.avatar;
+      message.senderColor = profile.color;
+      message.isNgip = profile.isNgip;
+      message.profile = profile;
+    };
+    ROOMS.forEach(room => room.messages.forEach(updateMessageProfile));
+    GLOBAL_CHAT_MESSAGES.forEach(updateMessageProfile);
+    io.emit('chat:profile_update', { profile });
 
     // Update in global leaderboard store
     const entry = GLOBAL_STORE.leaderboard.find(
@@ -3345,6 +3482,7 @@ io.on('connection', (socket: Socket) => {
         if (pIndex >= 0) {
           const departingPlayer = room.state.players[pIndex];
           departingPlayer.isConnected = false;
+          clearRoomMessagesForUser(departingPlayer.id, room);
 
           // If the room owner / host leaves, close the room immediately and return all players to lobby
           if (departingPlayer.isHost) {
@@ -3404,6 +3542,7 @@ io.on('connection', (socket: Socket) => {
 
   // 12. Disconnect Handler
   socket.on('disconnect', async () => {
+    if (globalPlayerId) clearGlobalMessagesForUser(globalPlayerId);
     if (currentRoomId && currentPlayerId) {
       const room = ROOMS.get(currentRoomId);
       if (room) {
@@ -3411,6 +3550,8 @@ io.on('connection', (socket: Socket) => {
         if (pIndex >= 0) {
           const departingPlayer = room.state.players[pIndex];
           departingPlayer.isConnected = false;
+          clearRoomMessagesForUser(departingPlayer.id, room);
+          clearGlobalMessagesForUser(departingPlayer.id);
 
           // If the room owner / host disconnected, close the room immediately and kick players to lobby
           if (departingPlayer.isHost) {
@@ -3840,6 +3981,47 @@ function sanitizeStateForClient(room: ServerRoom): GameState {
         }
       : undefined,
   };
+}
+
+function broadcastArcadeRaceState(room: ServerRoom) {
+  const race = room.arcadeRace;
+  if (!race) return;
+  const scores = Array.from(race.scores.entries()).map(([id, score]) => ({ id, score }));
+  io.to(room.id).emit('arcade:race_state', {
+    mode: race.mode,
+    status: race.status,
+    timeLeft: race.timeLeft,
+    scores,
+  });
+}
+
+function initArcadeRace(room: ServerRoom) {
+  if (room.arcadeRace?.timerInterval) clearInterval(room.arcadeRace.timerInterval);
+  const mode = room.settings.gameMode || 'multiplayer_draw';
+  const scores = new Map<string, number>();
+  getConnectedHumanPlayers(room).forEach(player => scores.set(player.id, player.score || 0));
+  const race: ServerArcadeRace = {
+    mode,
+    status: 'playing',
+    timeLeft: 60,
+    scores,
+    finished: new Set<string>(),
+  };
+  room.arcadeRace = race;
+  race.timerInterval = setInterval(() => {
+    race.timeLeft -= 1;
+    if (race.timeLeft <= 0) {
+      race.timeLeft = 0;
+      race.status = 'game_over';
+      if (race.timerInterval) clearInterval(race.timerInterval);
+    }
+    broadcastArcadeRaceState(room);
+    if (race.status === 'game_over') {
+      room.state.status = 'game_over';
+      io.to(room.id).emit('room:state', sanitizeStateForClient(room));
+    }
+  }, 1000);
+  broadcastArcadeRaceState(room);
 }
 
 /**

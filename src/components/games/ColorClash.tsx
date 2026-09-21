@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Zap, RefreshCw, Flame, CheckCircle2, AlertCircle, Heart } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface ColorOption {
   name: string;
@@ -68,6 +70,9 @@ export const ColorClash: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub 
     generateRound();
     soundManager.playCorrect();
   };
+
+  useMultiplayerAutoStart(startGame);
+  useMultiplayerArcadeRace('color_clash', score, isGameOver);
 
   useEffect(() => {
     if (isPlaying && !isGameOver) {

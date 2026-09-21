@@ -201,6 +201,17 @@ export interface ChatMessage {
   pointsAwarded?: number;
   rewardText?: string;
   reactions?: Record<string, string[]>; // emoji -> array of userIds
+  scope?: 'room' | 'global';
+  profile?: ChatProfile;
+}
+
+export interface ChatProfile {
+  id: string;
+  username: string;
+  avatar: string;
+  color?: string;
+  stats: Pick<PlayerStats, 'gamesPlayed' | 'wins' | 'losses' | 'totalScore'>;
+  isNgip?: boolean;
 }
 
 export interface DailyMission {

@@ -15,6 +15,7 @@ import {
 import { isValidEnglishWord } from '../../utils/dictionary';
 import { AiGameConfig } from '../VsAiArena';
 import { useAuth } from '../../context/AuthContext';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface SpellingBeeProps {
   onBackToHub: () => void;
@@ -78,6 +79,7 @@ export const SpellingBee: React.FC<SpellingBeeProps> = ({ onBackToHub, aiConfig 
   const [timeLeft, setTimeLeft] = useState(75);
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'finished'>('playing');
   const hasRecordedStatsRef = React.useRef(false);
+  useMultiplayerArcadeRace('spelling_bee', score, gameState === 'finished');
 
   const validWordSet = useMemo(() => new Set(puzzle.validWords.map((w) => w.toUpperCase())), [puzzle]);
 

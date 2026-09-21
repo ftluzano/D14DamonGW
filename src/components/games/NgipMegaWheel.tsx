@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
 import { NgipBadge } from '../NgipBadge';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface NgipMegaWheelProps {
   onBackToHub: () => void;
@@ -55,6 +56,8 @@ export const NgipMegaWheel: React.FC<NgipMegaWheelProps> = ({ onBackToHub }) => 
   const [spinHistory, setSpinHistory] = useState<
     { id: string; label: string; points: number; time: string }[]
   >([]);
+
+  useMultiplayerArcadeRace('ngip_mega_wheel', lastWin?.pointsWon || 0, Boolean(lastWin));
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

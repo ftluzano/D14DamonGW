@@ -16,6 +16,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
 import { AiGameConfig } from '../VsAiArena';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface PixelRevealProps {
   onBackToHub: () => void;
@@ -324,6 +326,9 @@ export const PixelReveal: React.FC<PixelRevealProps> = ({ onBackToHub, aiConfig 
     setTotalScore(0);
     startRound(0);
   };
+
+  useMultiplayerAutoStart(handleStartGame);
+  useMultiplayerArcadeRace('pixel_reveal', totalScore, gameState === 'game_over');
 
   const startRound = (roundIndex: number) => {
     setCurrentRound(roundIndex);

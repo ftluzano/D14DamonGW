@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Sparkles, Trophy, Grid, RefreshCw, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface Card {
   id: number;
@@ -43,6 +45,9 @@ export const EmojiMatch: React.FC<{ onBackToHub: () => void }> = ({ onBackToHub 
     setIsGameOver(false);
     soundManager.playCorrect();
   };
+
+  useMultiplayerAutoStart(initGame);
+  useMultiplayerArcadeRace('emoji_match', matchedPairs, isGameOver);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;

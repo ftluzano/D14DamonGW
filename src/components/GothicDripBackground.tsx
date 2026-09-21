@@ -2,14 +2,12 @@ import React from 'react';
 
 export const GothicDripBackground: React.FC = () => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
-      {/* 1. Subtle Radial / Ambient Drip Gradient & Realistic Animated Glow Orbs */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/[0.03] dark:via-purple-900/[0.08] to-pink-500/[0.03] dark:to-slate-950" />
-      
-      {/* Dynamic Ambient Floating Lights */}
-      <div className="absolute -top-32 left-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-600/15 rounded-full blur-3xl animate-shimmer-pulse pointer-events-none" />
-      <div className="absolute top-1/2 -right-24 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-3xl animate-shimmer-pulse pointer-events-none [animation-delay:2s]" />
-      <div className="absolute -bottom-24 left-1/3 w-88 h-88 bg-pink-500/10 dark:bg-pink-600/10 rounded-full blur-3xl animate-shimmer-pulse pointer-events-none [animation-delay:4s]" />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none" aria-hidden="true">
+      <div className="absolute inset-x-0 top-0 h-px bg-cyan-400/60 shadow-[0_0_22px_rgba(34,211,238,.6)]" />
+      <div className="gw-scanline absolute top-[22%] left-0 h-px w-32 bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+      <div className="absolute left-[8%] top-[18%] h-32 w-px bg-gradient-to-b from-transparent via-cyan-400/40 to-transparent" />
+      <div className="absolute right-[12%] top-[32%] h-48 w-px bg-gradient-to-b from-transparent via-rose-400/30 to-transparent" />
+      <div className="absolute bottom-[18%] left-[22%] h-px w-48 bg-gradient-to-r from-transparent via-lime-300/40 to-transparent" />
 
       {/* Subtle Realistic Perspective Grid Matrix */}
       <div 
@@ -32,46 +30,37 @@ export const GothicDripBackground: React.FC = () => {
         <path d="M0,0 L1200,0 L1200,30 Q1160,32 1140,75 Q1130,95 1120,70 Q1100,25 1070,30 Q1040,35 1020,95 Q1010,118 1000,90 Q980,30 950,28 Q920,25 900,65 Q880,30 840,32 Q810,35 790,110 Q780,120 770,95 Q750,25 710,30 Q670,35 650,80 Q640,105 630,75 Q610,25 570,30 Q540,35 520,115 Q510,125 500,95 Q480,28 440,30 Q410,32 390,75 Q370,25 330,30 Q300,35 280,105 Q270,120 260,85 Q240,25 200,30 Q170,35 150,70 Q130,25 90,30 Q60,35 40,95 Q30,115 20,80 Q10,30 0,32 Z" />
       </svg>
 
-      {/* 3. Authentic Y2K Gothic Graffiti Tags & Stencils (Subtle low transparency: ~8-12%) */}
-      <div className="absolute inset-0 opacity-[0.07] dark:opacity-[0.14] text-slate-800 dark:text-purple-300 font-black tracking-widest pointer-events-none transition-opacity duration-300">
+      {/* Quiet editorial marks keep the shell branded without competing with gameplay. */}
+      <div className="absolute inset-0 opacity-[0.035] dark:opacity-[0.08] text-slate-800 dark:text-slate-200 font-black tracking-widest pointer-events-none transition-opacity duration-300">
         
         {/* Top-Left Tag: GUESSWHAT */}
-        <div className="absolute top-12 left-4 sm:left-12 rotate-[-12deg] text-3xl sm:text-6xl font-black uppercase tracking-tighter filter blur-[0.5px] border-b-2 border-current pb-1">
-          ☠ GUESS WHAT ⚔
+        <div className="absolute top-24 left-4 sm:left-12 rotate-[-8deg] text-3xl sm:text-6xl font-black uppercase tracking-tighter border-b-2 border-current pb-1">
+          GUESS WHAT
         </div>
 
         {/* Top-Right Tag: Y2K DRIP */}
-        <div className="absolute top-16 right-4 sm:right-16 rotate-[14deg] text-2xl sm:text-5xl font-black uppercase tracking-widest text-pink-500/80 dark:text-pink-400">
-          ✦ Y2K DRIP ✦
+        <div className="absolute top-28 right-4 sm:right-16 rotate-[10deg] text-2xl sm:text-5xl font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-300">
+          LIVE ARCADE
         </div>
 
         {/* Center-Left Stencil: DĄMON */}
-        <div className="absolute top-[35%] left-2 sm:left-8 rotate-[-90deg] origin-left text-4xl sm:text-7xl font-extrabold tracking-widest uppercase">
-          ⛓ DĄMON ⛓
+        <div className="absolute top-[40%] left-2 sm:left-8 rotate-[-90deg] origin-left text-4xl sm:text-7xl font-extrabold tracking-widest uppercase">
+          DĄMON
         </div>
 
         {/* Center-Right Gothic Cross & Barbed Graffiti */}
-        <div className="absolute top-[40%] right-3 sm:right-12 rotate-[90deg] origin-right text-3xl sm:text-6xl font-black tracking-widest uppercase">
-          ✞ ROCKHESTRA ✞
+        <div className="absolute top-[45%] right-3 sm:right-12 rotate-[90deg] origin-right text-3xl sm:text-6xl font-black tracking-widest uppercase">
+          PLAY TOGETHER
         </div>
 
         {/* Mid Background Spray Splatters & Symbols */}
-        <div className="absolute top-[55%] left-[20%] text-5xl sm:text-8xl rotate-[8deg] opacity-60">
-          ⚔ ✧ ☠
-        </div>
-
-        <div className="absolute top-[65%] right-[18%] text-4xl sm:text-7xl rotate-[-10deg] opacity-60">
-          🩸 BATTLE HYMN 🩸
-        </div>
-
-        {/* Bottom-Left Graffiti: CYBER GOTHIC */}
-        <div className="absolute bottom-16 left-6 sm:left-20 rotate-[6deg] text-3xl sm:text-6xl font-black uppercase tracking-tight">
-          ★ CYBER GOTHIC ★
+        <div className="absolute bottom-20 left-6 sm:left-20 rotate-[6deg] text-3xl sm:text-6xl font-black uppercase tracking-tight">
+          MAKE A MOVE
         </div>
 
         {/* Bottom-Right Graffiti: HIGH ROLLER งip */}
-        <div className="absolute bottom-20 right-6 sm:right-24 rotate-[-8deg] text-2xl sm:text-5xl font-black uppercase tracking-wider text-amber-500/80">
-          ⚡ งip SUPREME ⚡
+        <div className="absolute bottom-24 right-6 sm:right-24 rotate-[-8deg] text-2xl sm:text-5xl font-black uppercase tracking-wider text-rose-500/70">
+          YOUR TURN
         </div>
       </div>
 

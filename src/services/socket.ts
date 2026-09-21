@@ -12,6 +12,11 @@ if (typeof window !== 'undefined') {
 }
 
 export function getServerUrl(): string {
+  const configuredServerUrl = import.meta.env.VITE_GAME_SERVER_URL?.trim();
+  if (configuredServerUrl) {
+    return configuredServerUrl.replace(/\/$/, '');
+  }
+
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { soundManager } from '../../utils/soundEffects';
+import { useMultiplayerAutoStart } from '../../utils/useMultiplayerAutoStart';
+import { useMultiplayerArcadeRace } from '../../utils/useMultiplayerArcadeRace';
 
 interface BlindfoldMaestroProps {
   onBackToHub: () => void;
@@ -88,6 +90,9 @@ export const BlindfoldMaestro: React.FC<BlindfoldMaestroProps> = ({ onBackToHub 
 
     soundManager.playRoundStart();
   };
+
+  useMultiplayerAutoStart(handleStartDrawing);
+  useMultiplayerArcadeRace('blindfold_maestro', strokesRef.current.length, gameState === 'revealed');
 
   // Drawing timer loop
   useEffect(() => {
