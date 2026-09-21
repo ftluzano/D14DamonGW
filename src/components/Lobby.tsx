@@ -249,6 +249,7 @@ export const Lobby: React.FC<LobbyProps> = ({
     errorMessage,
     clearError,
     isConnected,
+    serverUrl,
   } = useGame();
   const { user } = useAuth();
 
@@ -309,6 +310,11 @@ export const Lobby: React.FC<LobbyProps> = ({
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setBetError(null);
+
+    if (!isConnected) {
+      setBetError(`Multiplayer server is unavailable at ${serverUrl}. Connect the deployed game server before creating a room.`);
+      return;
+    }
 
     const settings: RoomSettings = {
       roundDuration,

@@ -418,12 +418,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socket.emit('rooms:get');
     }
     fetch(`${getServerUrl()}/api/rooms`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Room server returned ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (data.rooms) setPublicRooms(data.rooms);
       })
       .catch(() => {
-        // Silently catch in case backend is starting
+        if (!socket.connected) {
+          setErrorMessage(`Multiplayer server unavailable at ${getServerUrl()}.`);
+        }
       });
   }, []);
 
