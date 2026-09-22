@@ -311,11 +311,6 @@ export const Lobby: React.FC<LobbyProps> = ({
     e.preventDefault();
     setBetError(null);
 
-    if (!isConnected) {
-      setBetError(`Multiplayer server is unavailable at ${serverUrl}. Connect the deployed game server before creating a room.`);
-      return;
-    }
-
     const settings: RoomSettings = {
       roundDuration,
       maxRounds,
@@ -509,6 +504,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 type="button"
                 onClick={() => {
                   setSelectedGameMode(currentMode);
+                  setIsPrivate(false);
                   setShowCreateModal(true);
                 }}
                 className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
