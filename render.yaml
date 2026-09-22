@@ -2,7 +2,7 @@ services:
   - type: web
     name: guesswhat-game-server
     runtime: node
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install --no-audit --no-fund && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
